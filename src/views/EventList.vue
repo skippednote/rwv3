@@ -2,63 +2,58 @@
   <div class="events">
     <img alt="Vue logo" src="../assets/logo.png" />
     <EventCard v-for="event in events" :event="event" :key="event.id" />
+    <div class="pagination">
+      <router-link
+        id="page-prev"
+        :to="{ name: 'EventList', query: { page: page - 1 } }"
+        rel="prev"
+        v-if="page != 1"
+        >&#60; Previous</router-link
+      >
+      <router-link
+        id="page-next"
+        :to="{ name: 'EventList', query: { page: page + 1 } }"
+        rel="next"
+        v-if="hasNextPage"
+        >Next &#62;</router-link
+      >
+    </div>
   </div>
 </template>
 
 <script>
 import EventCard from '@/components/EventCard.vue'
 import EventService from '@/services/EventService'
+import { watchEffect } from 'vue'
 
 export default {
   name: 'EventList',
+  props: ['page'],
   components: {
     EventCard,
   },
   data() {
     return {
-      events: [
-        {
-          id: 5928101,
-          category: 'animal welfare',
-          title: 'Cat Adoption Day',
-          description: 'Find your new feline friend at this event.',
-          location: 'Meow Town',
-          date: 'January 28, 2022',
-          time: '12:00',
-          petsAllowed: true,
-          organizer: 'Kat Laydee',
-        },
-        {
-          id: 4582797,
-          category: 'food',
-          title: 'Community Gardening',
-          description: 'Join us as we tend to the community edible plants.',
-          location: 'Flora City',
-          date: 'March 14, 2022',
-          time: '10:00',
-          petsAllowed: true,
-          organizer: 'Fern Pollin',
-        },
-        {
-          id: 8419988,
-          category: 'sustainability',
-          title: 'Beach Cleanup',
-          description: 'Help pick up trash along the shore.',
-          location: 'Playa Del Carmen',
-          date: 'July 22, 2022',
-          time: '11:00',
-          petsAllowed: false,
-          organizer: 'Carey Wales',
-        },
-      ],
+      events: null,
+      totalEvents: 0,
     }
   },
   created() {
-    EventService.getEvents()
-      .then((response) => {
-        this.events = response.data
-      })
-      .catch((error) => console.error(error))
+    watchEffect(() => {
+      this.events = null
+      EventService.getEvents(2, this.page)
+        .then((response) => {
+          this.events = response.data
+          this.totalEvents = response.headers['x-total-count']
+        })
+        .catch((error) => console.error(error))
+    })
+  },
+  computed: {
+    hasNextPage() {
+      const totalPages = Math.ceil(this.totalEvents / 2)
+      return this.page < totalPages
+    },
   },
 }
 </script>
@@ -68,5 +63,20 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.pagination {
+  display: flex;
+  width: 290px;
+}
+.pagination a {
+  flex: 1;
+  text-decoration: none;
+  color: #2c3e50;
+}
+#page-prev {
+  text-align: left;
+}
+#page-next {
+  text-align: right;
 }
 </style>
