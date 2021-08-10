@@ -7,6 +7,7 @@
 
 <script>
 import EventCard from '@/components/EventCard.vue'
+import EventService from '@/services/EventService'
 
 export default {
   name: 'EventList',
@@ -51,6 +52,13 @@ export default {
         },
       ],
     }
+  },
+  created() {
+    EventService.getEvents()
+      .then((response) => {
+        this.events = response.data
+      })
+      .catch((error) => console.error(error))
   },
 }
 </script>
